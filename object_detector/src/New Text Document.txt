@@ -1,0 +1,79 @@
+# Object Detection
+
+This repo contains a launch file for execution of entire object detection worflow. This launch file contains 4 nodes under the </node> section, each performing it’s individual task.
+(under object_detector package)
+
+    $ ros2 launch object_detector detector.launch
+
+The nodes created are written in c++ language
+
+## Node1: corners_detector.cpp
+
+Algorithm to detect the corners of a template in an image. Libraries were imported for Custom msg with the corners and centroid of the objects, and perspective transforms.(object_detector/corners.h,<Qtransform>)
+
+Publishes to the topic /corners (Publisher type object_detector::corners) (using
+po_nh.advertise)
+
+Subscribers to the topic /objects from find_object_2d/ObjectsStamped (using
+po_nh.subscribe). Used in creation of a corners object to publish the info.
+
+data is extracted given by the find object 2d topic, along with QTrasform. Template coordinates are the mapped to the current frame with the shape of the template and
+homography.
+
+Coordinates and cetroid are assigned and published: 
+
+    $ pub.publish(coordinates)
+
+
+## Node2: cent_calculator.cpp
+
+This node computes the centroid, height, widhth and angle with respect to to x of a template. Libraries were imported for Custom msg of Corner and States (“object_detector/Corners.h”,"object_detector/States.h")
+
+Publishes to the topic /states(Publisher type object_detector::States) (using po_nh.advertise). Subscribes to /corners topic from object_detector/Corners (using po_nh.subscribe). Used in creation of a States object to publish the info.
+
+Used in calculation of Theta angle, Right, left, bottom, top vactor magnitude.
+
+Assigns centroid of the template in the image
+
+## Node3: Kalman_filter.cpp
+
+Kalman filtering combines a system's dynamic model (e.g., physical laws of motion), known control
+inputs, and many sequential measurements (such as from sensors) to produce a better approximation of the system's fluctuating quantities or state.
+
+ the coordinate points from custom messages are passed to a Kalman filter
+estimation module. The filter will then provide estimated values, which hypothetically will be very
+close to the true value. Finally, the Kalman filter estimations are used to track the template in the
+image frame.
+
+Publishes to type object_detector::States, it publishes in /predicted_states topic. Subscribes to /states topic from object_detector/States
+
+Assigns the observations to the measurement vector and the predictions to the publisher object (pub.publish(predictions)).
+
+## Node4: plot_estimation.cpp
+
+Used for plotting the estimation of the template in an image.
+
+Two subscribers will be defined: sub and image_sub. Image_sub will subscriber to /image_raw topic and ‘sub’
+will subscribe to /predicted_states topic from object_detector/States.
+
+• Publishes to type sensor_msgs, it publishes in /rectangle_draw/raw_image topic.
+
+
+## Documentations
+
+[ros2](https://docs.ros.org/en/foxy/index.html) 
+
+[Kalman Filtering](https://www.intechopen.com/chapters/63164)
+
+[PX4-ROS2 bridge](https://docs.px4.io/v1.12/en/ros/ros2_comm.html) 
+
+[ROS subscriber and publisher](http://wiki.ros.org/ROS/Tutorials/WritingPublisherSubscriber%28python%29)
+
+[cv_bridge](http://wiki.ros.org/cv_bridge)
+
+
+
+
+## Author 
+
+- [@Anshumaan031 - <anshumaan.phukan@uavtech.ai>](https://github.com/Anshumaan031)
